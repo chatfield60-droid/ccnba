@@ -1,6 +1,12 @@
 name: Daily slate
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/daily.yml'
+      - 'model/**'
+      - 'pipeline/**'
   schedule:
     - cron: '30 14 * * *'
     - cron: '30 15 * * *'
