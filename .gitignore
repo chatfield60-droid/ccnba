@@ -12,3 +12,4 @@ web/node_modules/
 web/.next/
 web/.vercel/
 pipeline/node_modules/
+.vercel
