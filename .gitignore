@@ -1,6 +1,8 @@
 *.sqlite
 *.pkl
 *.csv
+!web/app/results.csv/
+!web/app/results.csv/route.ts
 .env*
 out/
 publish/
