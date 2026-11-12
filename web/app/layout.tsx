@@ -1,0 +1,3 @@
+import './globals.css';import type{Metadata}from'next';
+export const metadata:Metadata={title:'CC Analytics NBA | Player Props',description:'NBA player props, matchups, and model prices from CC Analytics'};
+export default function Layout({children}:{children:React.ReactNode}){return <><header><div className="wrap top"><a className="brand" href="/"><span className="brandmark">CC</span><span className="brandwords"><strong>CC Analytics</strong><small>NBA</small></span></a><nav className="nav"><a href="/games">Matchups</a><a href="/">Player props</a><a href="/results">Results</a><a href="/about">About</a></nav></div></header><main className="wrap">{children}</main><footer className="wrap">@THEBESTWAGER</footer></>}

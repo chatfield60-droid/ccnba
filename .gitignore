@@ -1,0 +1,12 @@
+*.sqlite
+*.pkl
+*.csv
+.env*
+out/
+publish/
+__pycache__/
+*.pyc
+web/node_modules/
+web/.next/
+web/.vercel/
+pipeline/node_modules/

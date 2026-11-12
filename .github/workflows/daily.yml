@@ -1,0 +1,31 @@
+name: Daily slate
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 14 * * *'
+    - cron: '30 15 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: daily-slate
+  cancel-in-progress: false
+jobs:
+  slate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r pipeline/requirements.txt
+      - run: npm ci --prefix pipeline
+      - run: python pipeline/run_daily.py
+        env:
+          PYTHONPATH: model
+          SCHEDULE_CRON: ${{ github.event.schedule }}
+          BDL_API_KEY: ${{ secrets.BDL_API_KEY }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          PRIVATE_READ_WRITE_TOKEN: ${{ secrets.PRIVATE_READ_WRITE_TOKEN }}
