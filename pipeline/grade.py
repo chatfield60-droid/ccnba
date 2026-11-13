@@ -37,7 +37,7 @@ def main():
      result='push' if delta==0 else 'win' if win else 'loss'
      price=float(p.get('odds') or 0);risk=abs(price)/100 if price<0 else 1
      units=(1 if price<0 else price/100) if result=='win' else -risk if result=='loss' else 0
-  history.append({**{k:p.get(k) for k in ('player','player_id','game_id','stat','line','pick','odds','book','ev','tier')},'date':a.date,'actual':actual,'result':result,'units':round(units,3)})
+  history.append({**{k:p.get(k) for k in ('player','player_id','game','game_id','stat','line','pick','odds','book','ev','tier')},'date':a.date,'actual':actual,'result':result,'units':round(units,3)})
   seen.add(key)
  dest.write_text(json.dumps(history))
 if __name__=='__main__':main()
