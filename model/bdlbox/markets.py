@@ -231,8 +231,10 @@ def price_slate(sims, team_sims, ctx, lines: pd.DataFrame, cfg: ModelConfig):
         lines["game_id"] = np.nan
     if "game" in lines:
         miss = lines.game_id.isna()
-        lines.loc[miss, "game_id"] = lines.loc[miss, "game"].map(
-            lambda g: ctx["game_lookup"].get(str(g).strip().lower(), np.nan))
+        if miss.any():
+            lines["game_id"] = lines["game_id"].astype(object)
+            lines.loc[miss, "game_id"] = lines.loc[miss, "game"].map(
+                lambda g: ctx["game_lookup"].get(str(g).strip().lower(), np.nan))
     game_bad = game_checks(ctx["teams"], lines, ctx["team_l10"], cfg)
     rows = []
     for _, L in lines.iterrows():
