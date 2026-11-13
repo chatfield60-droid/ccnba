@@ -1,0 +1,34 @@
+name: Scores and schedule
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/scores.yml'
+      - 'pipeline/refresh_games.py'
+  schedule:
+    - cron: '*/30 * * * *'
+permissions:
+  contents: read
+concurrency:
+  group: nba-scores
+  cancel-in-progress: false
+jobs:
+  scores:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix pipeline
+      - run: python pipeline/refresh_games.py
+        env:
+          BDL_API_KEY: ${{ secrets.BDL_API_KEY }}
+      - run: node pipeline/blob.mjs push-public publish/games/live.json
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          PRIVATE_READ_WRITE_TOKEN: ${{ secrets.PRIVATE_READ_WRITE_TOKEN }}

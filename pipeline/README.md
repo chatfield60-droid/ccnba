@@ -1,3 +1,4 @@
 BALLDONTLIE OpenAPI checked 2026-11-12: https://www.balldontlie.io/openapi/nba.yml
 Game odds: GET /nba/v2/odds with game_ids[] and cursor pagination. The OpenAPI style metadata suggests game_ids, but the live endpoint rejects that form and requires game_ids[]=value. Fields include total_value, total_over_odds, total_under_odds, spread_home_value, spread_home_odds, spread_away_odds, moneyline_home_odds, moneyline_away_odds, vendor.
 Player props: GET /nba/v2/odds/player_props?game_id=<id>. No pagination. Fields include player_id, prop_type, line_value, vendor, market.type and market.over_odds/under_odds or market.odds.
+Scores and schedule: GET /v1/games with dates[] and cursor pagination. `refresh_games.py` publishes `games/live.json` every 30 minutes, including only public game identity, status, tipoff and scores. Future tipoffs cannot show a final score even if the provider returns one.
