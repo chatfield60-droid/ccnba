@@ -24,9 +24,11 @@ function GameCard({game, projection, players=[]}:{game:ScoreGame;projection?:Gam
 
 export default async function Games({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}) {
   const [params, board, feed] = await Promise.all([searchParams,slate(),scoreFeed()]);
-  const today = board.date;
+  const stamp = feed.updated_at ? new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(feed.updated_at)) : [];
+  const part = (kind:string) => stamp.find(p=>p.type===kind)?.value||'';
+  const today = stamp.length ? `${part('year')}-${part('month')}-${part('day')}` : board.date;
   const current = feed.games.filter(g=>g.date===today);
-  const fallback: ScoreGame[] = board.games.filter(g=>!current.some(x=>Number(x.game_id)===Number(g.game_id))).map(g=>({game_id:Number(g.game_id),date:today,status:'scheduled',home:String(g.home||g.home_team||'Home'),away:String(g.away||g.away_team||'Away'),home_score:null,away_score:null}));
+  const fallback: ScoreGame[] = (board.date===today?board.games:[]).filter(g=>!current.some(x=>Number(x.game_id)===Number(g.game_id))).map(g=>({game_id:Number(g.game_id),date:today,status:'scheduled',home:String(g.home||g.home_team||'Home'),away:String(g.away||g.away_team||'Away'),home_score:null,away_score:null}));
   const todaysGames = [...current,...fallback].sort((a,b)=>String(a.starts_at||'').localeCompare(String(b.starts_at||'')));
   const upcoming = feed.games.filter(g=>g.date>today && g.status!=='final').slice(0,16);
   const finals = feed.games.filter(g=>g.date<today && g.status==='final').sort((a,b)=>b.date.localeCompare(a.date)||Number(b.game_id)-Number(a.game_id)).slice(0,24);
