@@ -17,6 +17,7 @@ try:
   with open('minutes_model.pkl','rb') as f:pickle.load(f)
 except Exception:run(sys.executable,'-m','bdlbox','train-minutes')
 with open('lines.csv','w') as f:run(sys.executable,'pipeline/fetch_lines.py','--date',date,stdout=f)
+if sum(1 for _ in open('lines.csv'))<=1:raise SystemExit('No priced lines returned; keeping the last published slate')
 run(sys.executable,'-m','bdlbox','project','--date',date,'--lines','lines.csv','--out','out')
 run(sys.executable,'pipeline/publish.py','--date',date)
 run('node','pipeline/blob.mjs','pull-history',yesterday)
