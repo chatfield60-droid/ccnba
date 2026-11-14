@@ -291,7 +291,8 @@ def price_slate(sims, team_sims, ctx, lines: pd.DataFrame, cfg: ModelConfig):
         out.loc[top, "backup"] = out.loc[top, "backup"] + (
             " Checks passed: recent and season averages agree with the side; projected minutes consistent "
             "with recent role (or explained by absences); sample size; no player flags; game total/margin "
-            "within tolerance of market. Calibrated EV in the 10-15% band.")
+            "within tolerance of market. Calibrated EV clears the 8% value floor or the 6% floor "
+            "with at least 65% calibrated hit probability.")
         rest = out.suggest_ok.fillna(False).astype(bool) & ~out.index.isin(top)
         out.loc[rest, "reason"] = f"eligible, outside today's top {cfg.suggested_max_per_day}"
     tier = out["tier"] if "tier" in out else pd.Series(None, index=out.index)
@@ -337,8 +338,10 @@ def _classify(r, text, fails, game_fail, cfg):
         elig.append("market not in suggested set")
     if r.get("pick") == "OVER" and not cfg.suggest_overs:
         elig.append("overs not suggested: graded overs showed no model signal")
-    if ev < cfg.suggested_min_ev:
-        elig.append(f"calibrated EV under {cfg.suggested_min_ev:.0%} (suggested band is {cfg.suggested_min_ev:.0%}-{cfg.max_ev:.0%})")
+    value_ok = ev >= cfg.suggested_min_ev
+    high_prob_ok = ev >= cfg.suggested_high_prob_min_ev and r["p_display"] >= cfg.suggested_high_prob_min_p
+    if not (value_ok or high_prob_ok):
+        elig.append(f"below suggested floors ({cfg.suggested_min_ev:.0%} EV, or {cfg.suggested_high_prob_min_ev:.0%} EV with {cfg.suggested_high_prob_min_p:.0%} hit chance)")
     note = "derived estimate (first 3 minutes)" if r.get("mkt") in DERIVED else ""
     return dict(r, tier="lean", suggest_ok=not elig,
                 reason="; ".join([x for x in [note, ("not suggested: " + "; ".join(elig)) if elig else ""] if x]))

@@ -98,7 +98,9 @@ class ModelConfig:
     suggest_team_markets: bool = False # team lines can't be suggested until a team model earns weight
     suggest_overs: bool = True
     suggested_markets: tuple = ("pts", "reb", "ast", "fg3m", "pr", "pa", "ra", "pra")
-    suggested_min_ev: float = 0.10     # suggested = calibrated EV 10-15% + every backup check
+    suggested_min_ev: float = 0.08     # suggested = calibrated EV 8-15% + every backup check
+    suggested_high_prob_min_ev: float = 0.06
+    suggested_high_prob_min_p: float = 0.65
     suggested_max_per_day: int = 1000  # no count cap: the band itself sets volume (~8-13/day measured)
     display_knee: float = 0.14         # shown EV equals calibrated EV up to here, flattened below 15%
     display_d0: float = 0.8            # display shrink: logit gap at which model weight halves

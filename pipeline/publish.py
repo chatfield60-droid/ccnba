@@ -21,7 +21,8 @@ def main():
         if r.get('pick') in ('UNDER','AWAY','NO') and r.get('under_book'):r['book']=r['under_book']
         ev=numeric(r.get('ev'));raw=numeric(r.get('ev_calibrated_raw'))
         if ev is None or ev>=.15 or raw is not None and raw>=.15:raise ValueError('A 15% EV row reached predictions')
-        if r.get('tier')=='suggested' and (ev<.10 or r.get('stat') in ('game_total','team_total','spread','moneyline')):raise ValueError('Invalid suggested row')
+        chance=numeric(r.get('p_display'))
+        if r.get('tier')=='suggested' and (not (ev>=.08 or ev>=.06 and chance is not None and chance>=.65) or r.get('stat') in ('game_total','team_total','spread','moneyline')):raise ValueError('Invalid suggested row')
     ids=[r.get('player_id') or r.get('player') for r in pred if r.get('tier')=='suggested']
     if len(ids)!=len(set(ids)):raise ValueError('Multiple suggestions for one player')
     teams={}
