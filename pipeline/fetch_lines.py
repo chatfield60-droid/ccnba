@@ -30,7 +30,9 @@ def main():
             key=(gid,pid,stat,line);grouped.setdefault(key,[]).append((p.get('vendor',''),m,label))
         cursor=None
         while True:
-            params={'game_ids':gid,'per_page':100}
+            # The live endpoint accepts the bracketed array form; the plain OpenAPI
+            # form currently returns HTTP 400 for this request.
+            params={'game_ids[]':gid,'per_page':100}
             if cursor:params['cursor']=cursor
             body=request('/nba/v2/odds',params)
             for p in body.get('data',[]):
