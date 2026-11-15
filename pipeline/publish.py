@@ -8,6 +8,9 @@ def rows(path):
 def numeric(x):
     try:return float(x)
     except:return None
+def identifier(x):
+    n=numeric(x)
+    return int(n) if n is not None and n.is_integer() else None
 def clean(row,fields):
     out={}
     for k in fields:
@@ -16,11 +19,11 @@ def clean(row,fields):
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--date',required=True);ap.add_argument('--out',default='out');ap.add_argument('--publish',default='publish');a=ap.parse_args()
     src=Path(a.out);pred=rows(src/f'predictions_{a.date}.csv');box=rows(src/f'box_{a.date}.csv');games=rows(src/f'games_{a.date}.csv')
-    projected={(r.get('game_id'),r.get('player_id')) for r in box}
-    game_ids={r.get('game_id') for r in games}
+    projected={(identifier(r.get('game_id')),identifier(r.get('player_id'))) for r in box}
+    game_ids={identifier(r.get('game_id')) for r in games}
     for r in pred:
-        if r.get('game_id') not in game_ids:raise ValueError(f"Prediction has no projected game: {r.get('game_id')}")
-        if r.get('player_id') and (r.get('game_id'),r.get('player_id')) not in projected:
+        if identifier(r.get('game_id')) not in game_ids:raise ValueError(f"Prediction has no projected game: {r.get('game_id')}")
+        if r.get('player_id') and (identifier(r.get('game_id')),identifier(r.get('player_id'))) not in projected:
             raise ValueError(f"Player prediction is assigned to the wrong game: {r.get('player_id')} / {r.get('game_id')}")
     for r in pred:
         if r.get('pick') in ('OVER','HOME','YES') and r.get('over_book'):r['book']=r['over_book']

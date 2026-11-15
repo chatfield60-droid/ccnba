@@ -168,7 +168,7 @@ def _apply_minutes_model(mm, store, state, meta, hr, ar, d, season):
         return notes
     pr = predict_tonight(mm, stats, games, hist, pd.DataFrame(rows), tonight)
     idx = state.players.index.intersection(pr.player_id)
-    pr = pr.set_index("player_id").loc[idx]
+    pr = pr.drop_duplicates("player_id", keep="last").set_index("player_id").loc[idx]
     state.players.loc[idx, "min_mu"] = pr.min_mu.values
     state.players.loc[idx, "min_sd"] = pr.min_sd.values
     state.players.loc[idx, "lineup_status"] = status

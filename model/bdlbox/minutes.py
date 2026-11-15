@@ -183,8 +183,11 @@ def live_rows(stats, games, rosters, starters_tonight):
 
 def predict_tonight(model, stats, games, starters_hist, rosters, starters_tonight=None):
     """mu, sd per player for tonight's games. Features use only finished games."""
-    live = live_rows(stats, games, rosters, starters_tonight)
-    allrows = pd.concat([stats, live[stats.columns.intersection(live.columns)]], ignore_index=True)
+    live = live_rows(stats, games, rosters, starters_tonight).drop_duplicates(["game_id", "player_id"])
+    # A refresh after tipoff can include partial box scores from today's games.
+    # Keep only earlier dates so every player gets one pregame feature row.
+    history = stats[stats.date.astype(str) < str(live.date.iloc[0])]
+    allrows = pd.concat([history, live[stats.columns.intersection(live.columns)]], ignore_index=True)
     st = starters_hist
     if starters_tonight is not None:
         add = live[["game_id", "player_id"]].assign(starter=live.player_id.isin(starters_tonight).astype(int))
@@ -192,6 +195,7 @@ def predict_tonight(model, stats, games, starters_hist, rosters, starters_tonigh
     F = build_frame(allrows, games, st)
     key = set(zip(live.game_id, live.player_id))
     T = F[[(g_, p_) in key for g_, p_ in zip(F.game_id, F.player_id)]].copy()
+    T = T.drop_duplicates(["game_id", "player_id"], keep="last")
     T = T[T.m_l1.notna()]
     mu, sd = model.predict(T)
     return pd.DataFrame({"player_id": T.player_id.values, "game_id": T.game_id.values, "min_mu": mu, "min_sd": sd})
