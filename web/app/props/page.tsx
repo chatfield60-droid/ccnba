@@ -12,7 +12,8 @@ const VIEWS=[['board','Player board'],['edges','Best edges'],['benefits','Who be
 
 export default async function Props({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}){
  const [params,board,feed]=await Promise.all([searchParams,slate(),scoreFeed()]);
- const fixtures=fixtureList(board.games,feed),selected=chosenFixture(fixtures,param(params.fixture));
+ const fixtures=fixtureList(board.games,feed),pricedIds=new Set(safe(board.predictions).filter(r=>r.player_id).map(r=>Number(r.game_id)));
+ const selected=chosenFixture(fixtures,param(params.fixture),pricedIds);
  const game=selected?.game,score=selected?.score,fixture=String(game?.game_id||''),view=VIEWS.some(x=>x[0]===param(params.view))?param(params.view):'board';
  const open=board.date===easternDate()&&oddsOpen(score);
  const rows=open?safe(board.predictions).filter(r=>r.player_id&&Number(r.game_id)===Number(game?.game_id)):[];

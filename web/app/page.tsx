@@ -10,9 +10,10 @@ const marketName=(r:Prediction)=>r.stat==='moneyline'?`${r.pick==='HOME'?'Home':
 
 export default async function Matchups({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}){
  const [params,board,feed]=await Promise.all([searchParams,slate(),scoreFeed()]);
- const fixtures=fixtureList(board.games,feed),selected=chosenFixture(fixtures,param(params.fixture));
+ const rows=safe(board.predictions),fixtures=fixtureList(board.games,feed);
+ const selected=chosenFixture(fixtures,param(params.fixture),new Set(rows.map(r=>Number(r.game_id))));
  const current=board.date===easternDate(),statusById=new Map(feed.games.map(g=>[Number(g.game_id),g]));
- const rows=safe(board.predictions),props=current?rows.filter(r=>r.player_id&&oddsOpen(statusById.get(Number(r.game_id)))&&r.stat!=='game_total'&&r.stat!=='team_total'&&r.stat!=='spread'&&r.stat!=='moneyline'):[];
+ const props=current?rows.filter(r=>r.player_id&&oddsOpen(statusById.get(Number(r.game_id)))&&r.stat!=='game_total'&&r.stat!=='team_total'&&r.stat!=='spread'&&r.stat!=='moneyline'):[];
  const edges=topPickMix(props,9),groups=new Map<number,typeof edges>();
  for(const edge of edges){const id=Number(edge.game_id);groups.set(id,[...(groups.get(id)||[]),edge]);}
  const game=selected?.game,score=selected?.score,markets=game&&current&&oddsOpen(score)?gameMarkets(rows,game.game_id):[];

@@ -11,5 +11,10 @@ export function tip(value?:string){if(!value||!Number.isFinite(Date.parse(value)
 export function fixtureList(games:Game[],feed:ScoreFeed):{game:Game;score?:ScoreGame}[]{
  return games.filter(g=>g.game_id!=null).map(game=>({game,score:feed.games.find(s=>Number(s.game_id)===Number(game.game_id))}));
 }
-export function chosenFixture(fixtures:ReturnType<typeof fixtureList>,id?:string){return fixtures.find(x=>String(x.game.game_id)===id)||fixtures[0];}
+export function chosenFixture(fixtures:ReturnType<typeof fixtureList>,id?:string,pricedIds?:Set<number>){
+ return fixtures.find(x=>String(x.game.game_id)===id)
+  ||fixtures.find(x=>oddsOpen(x.score)&&pricedIds?.has(Number(x.game.game_id)))
+  ||fixtures.find(x=>oddsOpen(x.score))
+  ||fixtures[0];
+}
 export function gameMarkets(rows:Prediction[],id?:number){return rows.filter(r=>Number(r.game_id)===Number(id)&&['game_total','team_total','spread','moneyline'].includes(r.stat));}
