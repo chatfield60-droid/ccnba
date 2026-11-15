@@ -1,9 +1,16 @@
 name: Daily slate
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/daily.yml'
+      - 'pipeline/**'
+      - 'model/**'
   schedule:
-    - cron: '30 14 * * *'
-    - cron: '30 15 * * *'
+    # 3:17, 6:17, 9:17, 12:17, and 15:17 Eastern; the script skips the DST-mismatched entry.
+    - cron: '17 7,10,13,16,19 * * *'
+    - cron: '17 8,11,14,17,20 * * *'
 permissions:
   contents: read
 concurrency:

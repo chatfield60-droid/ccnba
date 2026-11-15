@@ -66,4 +66,5 @@ def main():
         r['line_type']='most_quoted' if r.get('quote_count') and r['quote_count']==max_quotes.get(k) else 'alternate'
     fields=['game_id','game','player_id','player','team','stat','line','over_odds','under_odds','yes_odds','home_odds','away_odds','over_book','under_book','book','p_book_over','line_type','quote_count']
     w=csv.DictWriter(sys.stdout,fieldnames=fields);w.writeheader();w.writerows(rows+team)
+    print(f'odds feed: {len(games)} games, {len(rows)} player lines, {len(team)} game lines',file=sys.stderr)
 if __name__=='__main__':main()

@@ -2,7 +2,7 @@ import datetime,os,subprocess,sys,json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 ET=ZoneInfo('America/New_York');now=datetime.datetime.now(ET);today=now.date();date=today.isoformat();yesterday=(today-datetime.timedelta(days=1)).isoformat()
-expected_cron='30 14 * * *' if now.utcoffset().total_seconds()==-4*3600 else '30 15 * * *'
+expected_cron='17 7,10,13,16,19 * * *' if now.utcoffset().total_seconds()==-4*3600 else '17 8,11,14,17,20 * * *'
 if os.environ.get('GITHUB_EVENT_NAME')=='schedule' and os.environ.get('SCHEDULE_CRON')!=expected_cron:raise SystemExit(0)
 def run(*args,stdout=None):subprocess.run(args,check=True,stdout=stdout)
 run('node','pipeline/blob.mjs','pull')
