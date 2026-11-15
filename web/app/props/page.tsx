@@ -5,7 +5,7 @@ import type {Prediction} from '../../lib/data';
 import type {Metadata} from 'next';
 import {chosenFixture,easternDate,fixtureList,number,oddsOpen,pct,price,teamName,tip} from '../../lib/matchup';
 
-export const revalidate=60;
+export const revalidate=30;
 export const metadata:Metadata={title:'CC Analytics | NBA Player Props'};
 const param=(v:string|string[]|undefined)=>Array.isArray(v)?v[0]||'':v||'';
 const VIEWS=[['board','Player board'],['edges','Best edges'],['benefits','Who benefits?'],['ladders','Ladders'],['parlay','Parlay'],['optimizer','Slip optimizer'],['model','Model details']];

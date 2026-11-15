@@ -6,7 +6,19 @@ export type ScoreGame={game_id:number;date:string;starts_at?:string;status:'sche
 export type ScoreFeed={updated_at:string;games:ScoreGame[]};
 export type Graded={date:string;player?:string;game?:string;game_id?:number;stat:string;line:number;pick:string;odds:number;book?:string;ev:number;tier:string;actual:number|null;result:string;units:number};
 async function read<T>(path:string,fallback:T,revalidate=300):Promise<T>{try{const token=process.env.BLOB_READ_WRITE_TOKEN;const found=await list({prefix:path,limit:100,...(token?{token}:{})});const item=found.blobs.find(b=>b.pathname===path);if(!item)return fallback;const res=await fetch(item.url,{next:{revalidate}});if(!res.ok)return fallback;return await res.json() as T}catch{return fallback}}
-export async function slate(){const latest=await read<{date:string}>('slates/latest.json',{date:''});const d=latest.date;return{date:d,predictions:d?await read<Prediction[]>(`slates/${d}/predictions.json`,[]):[],players:d?await read<Player[]>(`slates/${d}/players.json`,[]):[],games:d?await read<Game[]>(`slates/${d}/games.json`,[]):[],meta:d?await read<Record<string,unknown>>(`slates/${d}/meta.json`,{}):{}}}
+export async function slate(){
+ const latest=await read<{date:string}>('slates/latest.json',{date:''},0),d=latest.date;
+ if(!d)return{date:d,predictions:[] as Prediction[],players:[] as Player[],games:[] as Game[],meta:{}};
+ const [predictions,players,games,meta]=await Promise.all([
+  read<Prediction[]>(`slates/${d}/predictions.json`,[],60),
+  read<Player[]>(`slates/${d}/players.json`,[],60),
+  read<Game[]>(`slates/${d}/games.json`,[],60),
+  read<Record<string,unknown>>(`slates/${d}/meta.json`,{},60),
+ ]);
+ const gameIds=new Set(games.map(g=>String(g.game_id)));
+ const playerGames=new Set(players.map(p=>`${p.game_id}|${p.player_id}`));
+ return{date:d,predictions:predictions.filter(p=>gameIds.has(String(p.game_id))&&(!p.player_id||playerGames.has(`${p.game_id}|${p.player_id}`))),players,games,meta};
+}
 export async function history(){return read<Graded[]>('results/history.json',[],60)}
 export async function scoreFeed(){return read<ScoreFeed>('games/live.json',{updated_at:'',games:[]},60)}
 export async function gameProjections(date:string){return read<Game[]>(`slates/${date}/games.json`,[])}

@@ -4,7 +4,7 @@ import {chosenFixture,easternDate,fixtureList,gameMarkets,number,oddsOpen,pct,pr
 import {topPickMix} from '../lib/picks';
 import type {Prediction} from '../lib/data';
 
-export const revalidate=60;
+export const revalidate=30;
 const param=(v:string|string[]|undefined)=>Array.isArray(v)?v[0]:v;
 const marketName=(r:Prediction)=>r.stat==='moneyline'?`${r.pick==='HOME'?'Home':'Away'} moneyline`:r.stat==='spread'?`${r.pick==='HOME'?'Home':'Away'} spread ${r.line}`:r.stat==='game_total'?`${r.pick} ${r.line} game total`:`${r.pick} ${r.line} team total`;
 

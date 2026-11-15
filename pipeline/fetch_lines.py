@@ -18,20 +18,24 @@ def main():
     active={r['player_id']:dict(r) for r in db.execute('select * from active_players')}
     names={pid:f"{r['first_name']} {r['last_name']}" for pid,r in active.items()}
     teams={r['team_id']:r['abbr'] for r in db.execute('select * from teams')}
-    grouped={};team=[]
+    grouped={};team=[];rejected_player=0;rejected_game=0
     for gid in games:
         game=db.execute('select * from games where game_id=?',(gid,)).fetchone()
         label=f"{teams.get(game['visitor_team_id'],'AWAY')} @ {teams.get(game['home_team_id'],'HOME')}"
         for p in request('/nba/v2/odds/player_props',{'game_id':gid}).get('data',[]):
+            if str(p.get('game_id'))!=str(gid):
+                rejected_player+=1;continue
             m=p.get('market') or {};pid=p.get('player_id');line=p.get('line_value');stat=p.get('prop_type')
             if not pid or not stat or line is None:continue
             key=(gid,pid,stat,line);grouped.setdefault(key,[]).append((p.get('vendor',''),m,label))
         cursor=None
         while True:
-            params={'game_ids[]':gid,'per_page':100}
+            params={'game_ids':gid,'per_page':100}
             if cursor:params['cursor']=cursor
             body=request('/nba/v2/odds',params)
             for p in body.get('data',[]):
+                if str(p.get('game_id'))!=str(gid):
+                    rejected_game+=1;continue
                 book=p.get('vendor','')
                 for stat,line,over,under in [('game_total',p.get('total_value'),p.get('total_over_odds'),p.get('total_under_odds')),('spread',p.get('spread_home_value'),p.get('spread_home_odds'),p.get('spread_away_odds')),('moneyline',0,p.get('moneyline_home_odds'),p.get('moneyline_away_odds'))]:
                     if line is None or over is None or under is None:continue
@@ -66,5 +70,5 @@ def main():
         r['line_type']='most_quoted' if r.get('quote_count') and r['quote_count']==max_quotes.get(k) else 'alternate'
     fields=['game_id','game','player_id','player','team','stat','line','over_odds','under_odds','yes_odds','home_odds','away_odds','over_book','under_book','book','p_book_over','line_type','quote_count']
     w=csv.DictWriter(sys.stdout,fieldnames=fields);w.writeheader();w.writerows(rows+team)
-    print(f'odds feed: {len(games)} games, {len(rows)} player lines, {len(team)} game lines',file=sys.stderr)
+    print(f'odds feed: {len(games)} games, {len(rows)} player lines, {len(team)} game lines; rejected {rejected_player} mismatched player offers and {rejected_game} mismatched game offers',file=sys.stderr)
 if __name__=='__main__':main()
