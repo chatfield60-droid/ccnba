@@ -1,8 +1,10 @@
 import type {Metadata} from 'next';
 import PlayerGroups from '../../components/PlayerGroups';
+import LadderGroups from '../../components/LadderGroups';
 import MatchupBanner from '../../components/MatchupBanner';
 import {safe,scoreFeed,slate} from '../../lib/data';
 import {selectionLabel} from '../../lib/labels';
+import {findPositiveEvLadders} from '../../lib/ladders';
 import {chosenFixture,easternDate,fixtureList,oddsOpen,pct,price,teamName,tip} from '../../lib/matchup';
 
 export const revalidate=30;
@@ -21,8 +23,7 @@ export default async function Props({searchParams}:{searchParams:Promise<Record<
  const rows=open?safe(board.predictions).filter(r=>r.player_id&&Number(r.game_id)===Number(game?.game_id)):[];
  const edges=rows.filter(r=>['suggested','lean'].includes(r.tier)&&r.ev>0)
   .sort((a,b)=>(a.tier==='suggested'?0:1)-(b.tier==='suggested'?0:1)||b.ev-a.ev).slice(0,24);
- const ladders=rows.filter(r=>r.line_type==='alternate'&&['suggested','lean'].includes(r.tier)&&r.ev>0&&Number.isFinite(Number(r.odds)))
-  .sort((a,b)=>(a.tier==='suggested'?0:1)-(b.tier==='suggested'?0:1)||b.ev-a.ev);
+ const ladders=findPositiveEvLadders(rows);
  return <>
   <section className="board-intro"><span className="eyebrow">PLAYER PROPS</span><h1>Build a matchup board.</h1><p>Fixture-specific player projections, fair prices, main lines, and alternate ladders from the same NBA simulation.</p>{!open?<p className="closed-prices">Prices are closed for this fixture. The next pregame board appears after the morning model run.</p>:null}</section>
   <section className="site-panel builder">
@@ -37,11 +38,11 @@ export default async function Props({searchParams}:{searchParams:Promise<Record<
   {game?<>
    <MatchupBanner game={game} score={score}/>
    <nav className="tool-tabs" aria-label="Player pricing tools">{VIEWS.map(([id,label])=><a key={id} className={view===id?'active':''} href={`/props?fixture=${fixture}&view=${id}`}>{label}</a>)}</nav>
-   {view==='board'?<section className="site-panel tool-content"><div className="panel-heading"><div><span className="eyebrow">FAIR PRICES</span><h2>Player board</h2><p>Each player shows the best eligible play, or a marked pass when none qualify. Open a player to see every priced line in this view.</p></div><span className="muted small">{rows.length} lines</span></div><PlayerGroups rows={rows} params={params} fixture={fixture} mode="board"/></section>:null}
+   {view==='board'?<section className="site-panel tool-content"><div className="panel-heading"><div><span className="eyebrow">FAIR PRICES</span><h2>Player board</h2><p>Each player shows the best eligible play, or a marked pass when none qualify. Open a player to see every priced line in this view.</p></div><span className="muted small">{rows.length} lines</span></div><PlayerGroups rows={rows} params={params} fixture={fixture}/></section>:null}
    {view==='edges'?<section className="site-panel tool-content"><div className="panel-heading"><div><span className="eyebrow">MODEL EDGE</span><h2>Best edges</h2><p>Suggested plays lead. Positive EV leans follow with their original labels.</p></div></div>{edges.length?<div className="edge-list props-edges">{edges.map((r,i)=><article className="edge-card" key={`${r.player_id}-${r.stat}-${r.line}-${i}`}><div className="edge-meta"><span className="eyebrow">{r.tier==='suggested'?'MODEL SUGGESTED':'POSITIVE EV LEAN'}</span>{r.line_type==='alternate'?<b className="altbadge">ALT</b>:null}</div><h3>{r.player}</h3><p>{selectionLabel(r.pick,r.line,r.stat)} · {pct(r.p_display)} chance</p><div className="edge-numbers"><span><small>FAIR</small><strong>{price(r.fair)}</strong></span><span><small>BOOK</small><strong>{price(r.odds)}</strong></span><span><small>EV</small><strong>{pct(r.ev)}</strong></span></div><div className="edge-footer">{r.book||'Book not listed'}</div><details><summary>Why this edge?</summary><p>{r.backup||r.reason||'No breakdown available.'}</p></details></article>)}</div>:<div className="empty">No positive EV player lines for this matchup.</div>}</section>:null}
    {view==='ladders'?<section className="site-panel tool-content">
-    <div className="panel-heading"><div><span className="eyebrow">AVAILABLE ALT MARKETS</span><h2>Ladder plays</h2><p>Currently priced alternate lines with positive EV. Suggestions lead; leans keep their model label.</p></div><span className="muted small">{ladders.length} available plays</span></div>
-    {ladders.length?<PlayerGroups rows={ladders} params={params} fixture={fixture} mode="ladders"/>:<div className="empty">No positive EV alternate prices are available for this fixture right now.</div>}
+    <div className="panel-heading"><div><span className="eyebrow">AVAILABLE ALT MARKETS</span><h2>Ladder plays</h2><p>A ladder needs at least three consecutive offered thresholds with positive EV for the same player, stat, and direction.</p></div><span className="muted small">{ladders.length} qualifying {ladders.length===1?'ladder':'ladders'}</span></div>
+    {ladders.length?<LadderGroups ladders={ladders} fixture={fixture} selected={param(params.player)}/>:<div className="empty">No three-rung positive EV ladder is available for this fixture right now.</div>}
    </section>:null}
    {view==='parlay'?<section className="site-panel tool-content"><div className="panel-heading"><div><span className="eyebrow">CORRELATION CHECK</span><h2>Parlay</h2></div></div><div className="empty">The NBA model has no validated same-game correlation prices. Single props and alternate ladders remain available in the other tabs.</div></section>:null}
   </>:<div className="empty">No fixture projection is available yet.</div>}
