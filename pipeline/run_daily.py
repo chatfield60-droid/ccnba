@@ -2,7 +2,7 @@ import datetime,os,subprocess,sys,json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 ET=ZoneInfo('America/New_York');now=datetime.datetime.now(ET);today=now.date();date=today.isoformat();yesterday=(today-datetime.timedelta(days=1)).isoformat()
-expected_cron='17 7,10,13,16,19 * * *' if now.utcoffset().total_seconds()==-4*3600 else '17 8,11,14,17,20 * * *'
+expected_cron='17 4,7,10,13,16,19 * * *' if now.utcoffset().total_seconds()==-4*3600 else '17 5,8,11,14,17,20 * * *'
 if os.environ.get('GITHUB_EVENT_NAME')=='schedule' and os.environ.get('SCHEDULE_CRON')!=expected_cron:raise SystemExit(0)
 def run(*args,stdout=None):subprocess.run(args,check=True,stdout=stdout)
 run('node','pipeline/blob.mjs','pull')
@@ -17,7 +17,13 @@ try:
   with open('minutes_model.pkl','rb') as f:pickle.load(f)
 except Exception:run(sys.executable,'-m','bdlbox','train-minutes')
 with open('lines.csv','w') as f:run(sys.executable,'pipeline/fetch_lines.py','--date',date,stdout=f)
-if sum(1 for _ in open('lines.csv'))<=1:raise SystemExit('No priced lines returned; keeping the last published slate')
+if sum(1 for _ in open('lines.csv'))<=1:
+ print('No priced lines returned; keeping the last published slate')
+ run('node','pipeline/blob.mjs','pull-history',yesterday)
+ run(sys.executable,'pipeline/grade.py','--date',yesterday)
+ run('node','pipeline/blob.mjs','push-private','bdl_nba.sqlite','minutes_model.pkl')
+ if Path('publish/results/history.json').exists():run('node','pipeline/blob.mjs','push-public','publish/results/history.json')
+ raise SystemExit(0)
 run(sys.executable,'-m','bdlbox','project','--date',date,'--lines','lines.csv','--out','out')
 run(sys.executable,'pipeline/publish.py','--date',date)
 run('node','pipeline/blob.mjs','pull-history',yesterday)
