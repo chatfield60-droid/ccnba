@@ -1,4 +1,5 @@
 import BoardTable from '../../components/BoardTable';
+import {statLabel} from '../../lib/labels';
 import {gameProjections, history, safe, scoreFeed, slate} from '../../lib/data';
 import type {Game, Graded, Player, ScoreGame} from '../../lib/data';
 
@@ -19,7 +20,7 @@ function GameCard({game, projection, players=[], graded=[]}:{game:ScoreGame;proj
     <div className="scoregrid">{(['away','home'] as const).map(side=><div className="scoreline" key={side}><span>{game[side]}</span><strong>{scored?game[`${side}_score`]:projected?fmt(projection?.[`${side}_pts`]):'-'}</strong><small>{scored?'Score':projected?'Projection':'Awaiting model'}</small></div>)}</div>
     {projected?<div className="matchup-metrics"><span>Model score {fmt(projection?.away_pts)}–{fmt(projection?.home_pts)}</span><span>Total {fmt(projection?.total)}</span><span>Home win {projection?.home_win_prob==null?'-':`${fmt(Number(projection.home_win_prob)*100)}%`}</span></div>:null}
     {roster.length?<details className="box-detail"><summary>Projected player box score</summary><div className="boxteams">{(['away','home'] as const).map(side=><div key={side}><h4>{game[side]}</h4><div className="tablewrap"><table><thead><tr>{['Player','MIN','PTS','REB','AST','3PM'].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{roster.filter(p=>p.side===side).sort((a,b)=>Number(b.min)-Number(a.min)).slice(0,8).map(p=><tr key={p.player_id}><td data-label="Player"><a href={`/player/${p.player_id}`}>{String(p.name||p.player||'Player')}</a></td>{(['min','pts','reb','ast','fg3m'] as const).map(k=><td data-label={k.toUpperCase()} key={k}>{fmt(p[k])}</td>)}</tr>)}</tbody></table></div></div>)}</div></details>:null}
-    {graded.length?<details className="box-detail"><summary>Graded game markets</summary><div className="tablewrap"><table><thead><tr>{['Market','Pick','Odds','Result','Units'].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{graded.map((r,i)=><tr key={i}><td data-label="Market">{r.stat} {r.line}</td><td data-label="Pick">{r.pick}</td><td data-label="Odds">{r.odds>0?'+':''}{r.odds}</td><td data-label="Result">{r.result}</td><td data-label="Units">{r.units>0?'+':''}{r.units.toFixed(2)}u</td></tr>)}</tbody></table></div></details>:null}
+    {graded.length?<details className="box-detail"><summary>Graded game markets</summary><div className="tablewrap"><table><thead><tr>{['Market','Pick','Odds','Result','Units'].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{graded.map((r,i)=><tr key={i}><td data-label="Market">{statLabel(r.stat)} {r.line}</td><td data-label="Pick">{r.pick}</td><td data-label="Odds">{r.odds>0?'+':''}{r.odds}</td><td data-label="Result">{r.result}</td><td data-label="Units">{r.units>0?'+':''}{r.units.toFixed(2)}u</td></tr>)}</tbody></table></div></details>:null}
   </article>;
 }
 

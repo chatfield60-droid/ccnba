@@ -1,5 +1,6 @@
 import {history} from '../../lib/data';
 import ResultsTable from '../../components/ResultsTable';
+import {statLabel} from '../../lib/labels';
 import type {Graded} from '../../lib/data';
 
 export const dynamic='force-dynamic';
@@ -20,14 +21,14 @@ export default async function Results({searchParams}:{searchParams:Promise<Recor
  const groups=new Map<string,Graded[]>();
  for(const r of suggested){
   const band=r.ev<.08?'6 to 8%':r.ev<.10?'8 to 10%':r.ev<.12?'10 to 12%':r.ev<.14?'12 to 14%':'14 to 15%';
-  for(const key of ['Stat: '+r.stat,'Side: '+r.pick,'EV: '+band])groups.set(key,[...(groups.get(key)||[]),r]);
+  for(const key of ['Stat: '+statLabel(r.stat),'Side: '+r.pick,'EV: '+band])groups.set(key,[...(groups.get(key)||[]),r]);
  }
  const running:{date:string;units:number}[]=[];let total=0;
  for(const r of [...suggested].sort((x,y)=>x.date.localeCompare(y.date))){total+=Number(r.units);running.push({date:r.date,units:total});}
  const extent=Math.max(1,...running.map(x=>Math.abs(x.units)));
  const tier=['suggested','lean','pass'].includes(param(params.tier))?param(params.tier):'';
  const q=param(params.q).trim().slice(0,100),needle=q.toLowerCase();
- const filtered=rows.filter(r=>(!tier||r.tier===tier)&&(!needle||(String(r.player||'')+' '+String(r.game||'')+' '+r.stat).toLowerCase().includes(needle)));
+ const filtered=rows.filter(r=>(!tier||r.tier===tier)&&(!needle||(String(r.player||'')+' '+String(r.game||'')+' '+r.stat+' '+statLabel(r.stat)).toLowerCase().includes(needle)));
  filtered.sort((x,y)=>y.date.localeCompare(x.date)||rank(x.tier)-rank(y.tier)||y.ev-x.ev);
  const pages=Math.max(1,Math.ceil(filtered.length/100));
  const requested=Number(param(params.page)),page=Number.isInteger(requested)?Math.min(Math.max(requested,1),pages):1;
