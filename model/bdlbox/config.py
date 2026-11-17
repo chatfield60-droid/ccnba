@@ -104,7 +104,6 @@ class ModelConfig:
     suggested_max_per_day: int = 1000  # no count cap: the band itself sets volume (~8-13/day measured)
     display_knee: float = 0.14         # shown EV equals calibrated EV up to here, flattened below 15%
     display_d0: float = 0.8            # display shrink: logit gap at which model weight halves
-    max_odds_abs: float = 200          # prices outside -200..+200 are never displayed
     sug_min_gap: float = 5.0           # projected vs L10 minutes must agree within this, unless explained
     sug_out_min_explains: float = 15.0 # teammate minutes out that can explain a minutes jump
     sug_min_games_season: int = 5

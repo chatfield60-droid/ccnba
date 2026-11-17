@@ -313,8 +313,6 @@ def _classify(r, text, fails, game_fail, cfg):
         why_not.append("team markets suspended: graded results showed the model worse than the market")
     if game_fail:
         why_not.append("game check: " + "; ".join(game_fail))
-    if (odds < 0 and -odds > cfg.max_odds_abs) or (odds > 0 and odds > cfg.max_odds_abs):
-        why_not.append(f"price {odds:+.0f} outside +/-{cfg.max_odds_abs:.0f}")
     if not r.get("directional", True):
         why_not.append(f"value is on {r['pick']} but model leans {r['direction']}")
     if r.get("ev_calibrated_raw", 0) >= cfg.max_ev:
