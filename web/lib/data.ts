@@ -22,6 +22,6 @@ export async function slate(){
 export async function history(){return read<Graded[]>('results/history.json',[])}
 export async function scoreFeed(){return read<ScoreFeed>('games/live.json',{updated_at:'',games:[]})}
 export async function gameProjections(date:string){return read<Game[]>(`slates/${date}/games.json`,[])}
-export const safe=(rows:Prediction[])=>rows.filter(r=>Number.isFinite(Number(r.ev))&&Number(r.ev)<.15&&r.tier!=='over_cap').map(r=>Number(r.odds)>=400&&r.player_id?{...r,tier:'pass',ev:0,fair:undefined,p_display:undefined,reason:'Longshot probabilities are under review after the graded +400 market missed its projected edge.'}:r);
+export const safe=(rows:Prediction[])=>rows.filter(r=>Number.isFinite(Number(r.ev))&&Number(r.ev)<.15&&r.tier!=='over_cap');
 export const pct=(x?:number)=>Number.isFinite(Number(x))?`${(Number(x)*100).toFixed(1)}%`:'-';
 export const odds=(x?:number)=>Number.isFinite(Number(x))?`${Number(x)>0?'+':''}${x}`:'-';

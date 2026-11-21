@@ -83,6 +83,23 @@ def _priced(p_side_model, p_side_disp, dec, mkt_p, cfg):
     return ev_raw, ev, p_shown
 
 
+def _longshot_prob(p, odds):
+    """Apply the Nov 12-18 longshot reliability fit to offered prices.
+
+    Positive-EV +400 offers hit 0.91, 0.69, and 0.63 times their displayed
+    expected wins in the +400-799, +800-1499, and +1500+ bands. Rounded
+    factors below were checked on Nov 19-20 before use. This adjusts the
+    probability, rather than excluding any price from consideration.
+    """
+    if odds >= 1500:
+        return p * 0.50
+    if odds >= 800:
+        return p * 0.68
+    if odds >= 400:
+        return p * 0.88
+    return p
+
+
 def _two_sided(p_over_raw, p_under_raw, over_odds, under_odds, cfg, kind="player", mkt=None,
                p_book_over=None):
     """Both sides. Pick = the value side, but only if it is also the side the model thinks is more
@@ -98,11 +115,13 @@ def _two_sided(p_over_raw, p_under_raw, over_odds, under_odds, cfg, kind="player
     # calibrated (w measured on the raw model probability) replaces the display shrink when enabled
     pdisp = _calibrate(pm, mo, cfg, kind, mkt) if cfg.calib_enabled else _display_prob(pm, mo, cfg)
     do, du = _dec(over_odds), _dec(under_odds)
-    ev_o_raw, ev_o, p_o = _priced(pm, pdisp, do, mo, cfg)
-    ev_u_raw, ev_u, p_u = _priced(1 - pm, 1 - pdisp, du, 1 - mo, cfg)
+    p_over = _longshot_prob(pdisp, over_odds)
+    p_under = _longshot_prob(1 - pdisp, under_odds)
+    ev_o_raw, ev_o, p_o = _priced(pm, p_over, do, mo, cfg)
+    ev_u_raw, ev_u, p_u = _priced(1 - pm, p_under, du, 1 - mo, cfg)
     side_over = ev_o >= ev_u
     likely_over = pm >= 0.5
-    raw_cal = (pdisp * do - 1) if side_over_cal(pdisp, mo, do, du) else ((1 - pdisp) * du - 1)
+    raw_cal = (p_over * do - 1) if side_over else (p_under * du - 1)
     return dict(ev_calibrated_raw=round(float(raw_cal), 4),
                 direction="OVER" if likely_over else "UNDER", p_hit=round(pm if likely_over else 1 - pm, 4),
                 pick="OVER" if side_over else "UNDER", directional=side_over == likely_over,
@@ -121,6 +140,7 @@ def _one_sided(p_yes, yes_odds, cfg, mkt=None):
     """Milestone (yes-only price). No devig possible, so the vigged implied is the reference."""
     mo = implied(yes_odds)
     pdisp = _calibrate(p_yes, mo, cfg, mkt=mkt) if cfg.calib_enabled else _display_prob(p_yes, mo, cfg)
+    pdisp = _longshot_prob(pdisp, yes_odds)
     ev_raw, ev, p_shown = _priced(p_yes, pdisp, _dec(yes_odds), mo, cfg)
     return dict(ev_calibrated_raw=round(float(pdisp * _dec(yes_odds) - 1), 4),
                 direction="YES" if p_yes >= 0.5 else "NO", p_hit=round(max(p_yes, 1 - p_yes), 4),
