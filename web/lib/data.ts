@@ -6,8 +6,9 @@ export type ScoreGame={game_id:number;date:string;starts_at?:string;status:'sche
 export type ScoreFeed={updated_at:string;games:ScoreGame[]};
 export type Graded={date:string;snapshot_id?:string;player?:string;game?:string;game_id?:number;stat:string;line:number;pick:string;odds:number;book?:string;ev:number;tier:string;actual:number|null;result:string;units:number};
 async function read<T>(path:string,fallback:T):Promise<T>{try{const token=process.env.BLOB_READ_WRITE_TOKEN;if(!token)return fallback;const blob=await get(path,{access:'public',token,useCache:false});if(!blob)return fallback;return await new Response(blob.stream).json() as T}catch{return fallback}}
-export async function slate(){
- const latest=await read<{date:string}>('slates/latest.json',{date:''}),d=latest.date;
+export async function slateByDate(requestedDate?:string){
+ const latest=requestedDate?null:await read<{date:string}>('slates/latest.json',{date:''});
+ const d=requestedDate??latest?.date??'';
  if(!d)return{date:d,predictions:[] as Prediction[],players:[] as Player[],games:[] as Game[],meta:{}};
  const [predictions,players,games,meta]=await Promise.all([
   read<Prediction[]>(`slates/${d}/predictions.json`,[]),
@@ -19,6 +20,7 @@ export async function slate(){
  const playerGames=new Set(players.map(p=>`${p.game_id}|${p.player_id}`));
  return{date:d,predictions:predictions.filter(p=>gameIds.has(String(p.game_id))&&(!p.player_id||playerGames.has(`${p.game_id}|${p.player_id}`))),players,games,meta};
 }
+export async function slate(){return slateByDate()}
 export async function history(){return read<Graded[]>('results/history.json',[])}
 export async function scoreFeed(){return read<ScoreFeed>('games/live.json',{updated_at:'',games:[]})}
 export async function gameProjections(date:string){return read<Game[]>(`slates/${date}/games.json`,[])}
