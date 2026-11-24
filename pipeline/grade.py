@@ -1,5 +1,5 @@
 """Append yesterday's settled player props to public result history."""
-import argparse,csv,json,sqlite3,subprocess
+import argparse,csv,json,sqlite3,subprocess,hashlib
 from pathlib import Path
 STATS={'points':'pts','rebounds':'reb','assists':'ast','threes':'fg3m','steals':'stl','blocks':'blk','points_rebounds':('pts','reb'),'points_assists':('pts','ast'),'rebounds_assists':('reb','ast'),'points_rebounds_assists':('pts','reb','ast')}
 def settle_player(actual,line,side):
@@ -9,7 +9,8 @@ def settle_player(actual,line,side):
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--date',required=True);a=ap.parse_args();path=Path('publish/slates')/a.date/'predictions.json'
  if not path.exists():return
- picks=json.loads(path.read_text());db=sqlite3.connect('bdl_nba.sqlite');db.row_factory=sqlite3.Row
+ predictions_json=path.read_text();picks=json.loads(predictions_json);snapshot_id=hashlib.sha256(predictions_json.encode()).hexdigest()
+ db=sqlite3.connect('bdl_nba.sqlite');db.row_factory=sqlite3.Row
  dest=Path('publish/results/history.json');dest.parent.mkdir(parents=True,exist_ok=True)
  history=json.loads(dest.read_text()) if dest.exists() else []
  history=[x for x in history if str(x.get('date'))!=a.date]
@@ -37,7 +38,7 @@ def main():
      result='push' if delta==0 else 'win' if win else 'loss'
      price=float(p.get('odds') or 0);risk=abs(price)/100 if price<0 else 1
      units=(1 if price<0 else price/100) if result=='win' else -risk if result=='loss' else 0
-  history.append({**{k:p.get(k) for k in ('player','player_id','game','game_id','stat','line','pick','odds','book','ev','tier')},'date':a.date,'actual':actual,'result':result,'units':round(units,3)})
+  history.append({**{k:p.get(k) for k in ('player','player_id','game','game_id','stat','line','pick','odds','book','ev','tier')},'date':a.date,'snapshot_id':snapshot_id,'actual':actual,'result':result,'units':round(units,3)})
   seen.add(key)
  dest.write_text(json.dumps(history))
 if __name__=='__main__':main()

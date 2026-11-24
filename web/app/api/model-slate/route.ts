@@ -8,7 +8,7 @@ export const dynamic='force-dynamic';
 export async function GET(){
  const board=await slate();
  const predictions=safe(board.predictions);
- const snapshotId=createHash('sha256')
+ const snapshotId=board.meta.snapshot_id??createHash('sha256')
   .update(JSON.stringify({date:board.date,predictions}))
   .digest('hex');
  return Response.json({

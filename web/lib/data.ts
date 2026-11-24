@@ -4,7 +4,7 @@ export type Player=Record<string,unknown>&{player_id:number;player?:string;team?
 export type Game=Record<string,unknown>&{game_id?:number;game?:string;home_team?:string;away_team?:string;home?:string;away?:string;home_pts?:number;away_pts?:number;total?:number;home_margin?:number;home_win_prob?:number};
 export type ScoreGame={game_id:number;date:string;starts_at?:string;status:'scheduled'|'live'|'final'|'postponed';status_text?:string;home:string;away:string;home_score:number|null;away_score:number|null};
 export type ScoreFeed={updated_at:string;games:ScoreGame[]};
-export type Graded={date:string;player?:string;game?:string;game_id?:number;stat:string;line:number;pick:string;odds:number;book?:string;ev:number;tier:string;actual:number|null;result:string;units:number};
+export type Graded={date:string;snapshot_id?:string;player?:string;game?:string;game_id?:number;stat:string;line:number;pick:string;odds:number;book?:string;ev:number;tier:string;actual:number|null;result:string;units:number};
 async function read<T>(path:string,fallback:T):Promise<T>{try{const token=process.env.BLOB_READ_WRITE_TOKEN;if(!token)return fallback;const blob=await get(path,{access:'public',token,useCache:false});if(!blob)return fallback;return await new Response(blob.stream).json() as T}catch{return fallback}}
 export async function slate(){
  const latest=await read<{date:string}>('slates/latest.json',{date:''}),d=latest.date;

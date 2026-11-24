@@ -1,5 +1,5 @@
 """Validate model outputs and produce only public JSON files."""
-import argparse,csv,json,os,sys,datetime
+import argparse,csv,json,os,sys,datetime,hashlib
 from zoneinfo import ZoneInfo
 from pathlib import Path
 PUBLIC=['player','player_id','team','opponent','game','game_id','stat','line','line_type','pick','odds','book','model_mean','fair','p_display','ev','tier','reason','backup','direction','p_hit']
@@ -39,9 +39,11 @@ def main():
         if r.get('team_id'):teams[r['team_id']]=teams.get(r['team_id'],0)+(numeric(r.get('min')) or 0)*(numeric(r.get('p_active')) or 0)
     if any(not 236<=v<=246 for v in teams.values()):raise ValueError(f'Expected minutes outside range: {teams}')
     dest=Path(a.publish)/'slates'/a.date;dest.mkdir(parents=True,exist_ok=True)
-    (dest/'predictions.json').write_text(json.dumps([clean(r,PUBLIC) for r in pred],allow_nan=False))
+    predictions_json=json.dumps([clean(r,PUBLIC) for r in pred],allow_nan=False)
+    (dest/'predictions.json').write_text(predictions_json)
+    snapshot_id=hashlib.sha256(predictions_json.encode()).hexdigest()
     (dest/'players.json').write_text(json.dumps([{k:(numeric(v) if numeric(v) is not None else v) for k,v in r.items() if v!=''} for r in box],allow_nan=False))
     (dest/'games.json').write_text(json.dumps([{k:(numeric(v) if numeric(v) is not None else v) for k,v in r.items() if v!=''} for r in games],allow_nan=False))
-    (dest/'meta.json').write_text(json.dumps({'date':a.date,'run_time_et':datetime.datetime.now(ZoneInfo('America/New_York')).isoformat(),'model_version':'v2.2','counts':{t:sum(r.get('tier')==t for r in pred) for t in ('suggested','lean','pass')}}))
+    (dest/'meta.json').write_text(json.dumps({'date':a.date,'run_time_et':datetime.datetime.now(ZoneInfo('America/New_York')).isoformat(),'model_version':'v2.2','snapshot_id':snapshot_id,'counts':{t:sum(r.get('tier')==t for r in pred) for t in ('suggested','lean','pass')}}))
     print(dest)
 if __name__=='__main__':main()
